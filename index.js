@@ -93,7 +93,6 @@ class EmbedBuilder extends DiscordEmbedBuilder {
 // ABSENCE_ROLE_ID=
 // WEAPON_DEALER_ROLE_ID=
 // ROBIN_BACKUP_ROLE_ID=
-// PLUK_ROLE_ID=
 // GANG_MEMBER_LIMIT=50
 
 const LOG_CHANNELS = {
@@ -291,7 +290,7 @@ const APPLICATION_BANNER_PATH = fileURLToPath(
   new URL('./Hollow-Kings-banner.png', import.meta.url),
 );
 const APPLICATION_BANNER_NAME = 'Hollow-Kings-banner.png';
-const PLUK_ROLE_ID = process.env.PLUK_ROLE_ID?.trim();
+const PLUK_ROLE_ID = '1518957917494186075';
 const WARN_ROLE_IDS = new Set(
   (process.env.WARN_ROLE_IDS ?? '')
     .split(',')
@@ -313,9 +312,9 @@ const WARN_ROLE_FORBIDDEN_PERMISSIONS = Object.freeze([
   PermissionFlagsBits.ViewAuditLog,
 ]);
 const PLUK_BANNER_PATH = fileURLToPath(
-  new URL('./hollow-kings-pluk-status.png', import.meta.url),
+  new URL('./Hollow-Kings-banner.png', import.meta.url),
 );
-const PLUK_BANNER_NAME = 'hollow-kings-pluk-status.png';
+const PLUK_BANNER_NAME = 'Hollow-Kings-banner.png';
 const WEAPON_DEALER_ROLE_ID =
   process.env.WEAPON_DEALER_ROLE_ID?.trim();
 const DEALER_SESSION_DURATION_MS = 30 * 60 * 1000;
@@ -12868,7 +12867,7 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 
-// Vaste open-/dichtmelding voor de verwerkstatus.
+// Vaste open-/dichtmelding voor de Pluk Status.
 client.on(Events.InteractionCreate, async interaction => {
   const plukCommands = ['plukopen', 'plukdicht'];
 
@@ -12958,25 +12957,25 @@ client.on(Events.InteractionCreate, async interaction => {
     .setColor(statusColor)
     .setTitle(
       isOpen
-        ? '🟢 Verwerkstatus — OPEN'
-        : '❌ Verwerkstatus — GESLOTEN',
+        ? '🟢 Pluk Status — OPEN'
+        : '❌ Pluk Status — GESLOTEN',
     )
     .setDescription(
       isOpen
         ? [
             '## Status',
-            '**Verwerk open 🟢**',
+            '**Pluk open 🟢**',
             '',
-            'Iedereen mag een aanvraag doen om te verwerken.',
+            'Iedereen mag plukken.',
           ].join('\n')
         : [
             '## Status',
-            '**Verwerk gesloten ❌**',
+            '**Pluk gesloten ❌**',
             '',
-            'Iedereen die wél verwerkt, krijgt een warn.',
+            'Iedereen die wél plukt, krijgt een warn.',
           ].join('\n'),
     )
-    .setFooter({ text: 'Hollow Kings • Pluksysteem' })
+    .setFooter({ text: 'Hollow Kings • Pluk Status' })
     .setTimestamp();
   const statusMessage = {
     content: `<@&${PLUK_ROLE_ID}>`,
@@ -13006,8 +13005,8 @@ client.on(Events.InteractionCreate, async interaction => {
 
     await interaction.editReply(
       isOpen
-        ? 'De groene melding ‘Verwerk open’ is geplaatst.'
-        : 'De rode melding ‘Verwerk gesloten’ is geplaatst.',
+        ? 'De groene melding ‘Pluk open’ is geplaatst.'
+        : 'De rode melding ‘Pluk gesloten’ is geplaatst.',
     );
 
     const logEmbed = new EmbedBuilder()
@@ -13033,7 +13032,7 @@ client.on(Events.InteractionCreate, async interaction => {
         },
         {
           name: 'Status',
-          value: isOpen ? 'Verwerk open 🟢' : 'Verwerk gesloten ❌',
+          value: isOpen ? 'Pluk open 🟢' : 'Pluk gesloten ❌',
           inline: true,
         },
         {
