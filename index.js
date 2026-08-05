@@ -95,8 +95,6 @@ class EmbedBuilder extends DiscordEmbedBuilder {
 // ROBIN_BACKUP_ROLE_ID=
 // APPLICATION_ROLE_ID=
 // PLUK_ROLE_ID=
-// STAFF_ACTION_ROLE_ID=
-// RANK_ROLE_IDS=1300970950019383397,1317980086552625203,...
 // GANG_MEMBER_LIMIT=50
 
 const LOG_CHANNELS = {
@@ -107,7 +105,9 @@ const LOG_CHANNELS = {
   server: process.env.SERVER_LOG_CHANNEL_ID,
   voice: process.env.VOICE_LOG_CHANNEL_ID,
   points: process.env.POINTS_LOG_CHANNEL_ID,
-  pointsActivity: process.env.POINTS_ACTIVITY_LOG_CHANNEL_ID,
+  pointsActivity:
+    process.env.POINTS_ACTIVITY_LOG_CHANNEL_ID?.trim() ||
+    process.env.POINTS_LOG_CHANNEL_ID,
   giveaway:
     process.env.GIVEAWAY_LOG_CHANNEL_ID?.trim() ||
     process.env.SERVER_LOG_CHANNEL_ID,
@@ -286,14 +286,13 @@ const EVENT_MINIMUM_LEAD_MS = 5 * 60 * 1000;
 const POINT_REACTION_EMOJIS = new Set(['🟢', '🔴']);
 const APPLICATION_ROLE_ID =
   process.env.APPLICATION_ROLE_ID?.trim();
-const DISMISSAL_PRESERVED_ROLE_ID = APPLICATION_ROLE_ID;
+const STAFF_ACTION_ROLE_ID = '1317979247440035921';
+const DISMISSAL_PRESERVED_ROLE_ID = '1301218044986654760';
 const APPLICATION_BANNER_PATH = fileURLToPath(
   new URL('./hollow-kings-sollicitaties.jpg', import.meta.url),
 );
 const APPLICATION_BANNER_NAME = 'hollow-kings-sollicitaties.jpg';
 const PLUK_ROLE_ID = process.env.PLUK_ROLE_ID?.trim();
-const STAFF_ACTION_ROLE_ID =
-  process.env.STAFF_ACTION_ROLE_ID?.trim();
 const WARN_ROLE_IDS = new Set(
   (process.env.WARN_ROLE_IDS ?? '')
     .split(',')
@@ -609,14 +608,7 @@ const DEFAULT_RANK_ROLE_IDS = Object.freeze([
   '1433234303810277487',
 ]);
 
-const configuredRankRoleIds = (process.env.RANK_ROLE_IDS ?? '')
-  .split(',')
-  .map(roleId => roleId.trim())
-  .filter(Boolean);
-
-const RANK_ROLE_IDS = configuredRankRoleIds.length
-  ? configuredRankRoleIds
-  : DEFAULT_RANK_ROLE_IDS;
+const RANK_ROLE_IDS = DEFAULT_RANK_ROLE_IDS;
 
 const parsedMemberLimit = Number.parseInt(
   process.env.GANG_MEMBER_LIMIT ?? '50',
@@ -10745,34 +10737,15 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     const currentRoles = [...targetMember.roles.cache.values()];
-    const rolesThatMayBeRemoved = currentRoles.filter(role =>
+    const dismissalRoles = currentRoles.filter(role =>
       role.id !== interaction.guild.id &&
-      role.id !== DISMISSAL_PRESERVED_ROLE_ID &&
-      !role.managed,
+      role.id !== DISMISSAL_PRESERVED_ROLE_ID,
     );
-    const blockedRoles = rolesThatMayBeRemoved.filter(
-      role => role.editable !== true,
+    const rolesToRemove = dismissalRoles.filter(
+      role => !role.managed && role.editable === true,
     );
-
-    if (blockedRoles.length) {
-      await interaction.reply({
-        content:
-          'Het ontslag is niet uitgevoerd, omdat ik niet alle ' +
-          'rollen kan verwijderen. Zet mijn botrol boven: ' +
-          `${shorten(
-            blockedRoles
-              .map(role => role.name ?? role.id)
-              .join(', '),
-            1200,
-          )}. Er is niets gewijzigd.`,
-        flags: MessageFlags.Ephemeral,
-        allowedMentions: { parse: [] },
-      });
-      return;
-    }
-
-    const rolesToRemove = rolesThatMayBeRemoved.filter(
-      role => role.editable === true,
+    const blockedRoles = dismissalRoles.filter(
+      role => role.managed || role.editable !== true,
     );
     const preservedRoleWasPresent = targetMember.roles.cache.has(
       DISMISSAL_PRESERVED_ROLE_ID,
@@ -10791,9 +10764,9 @@ client.on(Events.InteractionCreate, async interaction => {
         );
         await interaction.reply({
           content:
-            'Ik kon de rollen niet veilig verwijderen. Controleer ' +
-            'Rollen beheren en zet mijn botrol boven alle ' +
-            'gangrollen. Er is geen ontslagmelding geplaatst.',
+            'Ik kon de verwijderbare rollen niet verwijderen. ' +
+            'Controleer Rollen beheren en zet mijn botrol hoger. ' +
+            'Er is geen ontslagmelding geplaatst.',
           flags: MessageFlags.Ephemeral,
         });
         return;
@@ -10818,7 +10791,11 @@ client.on(Events.InteractionCreate, async interaction => {
             `**${rolesToRemove.length} verwijderd**\n` +
             (preservedRoleWasPresent
               ? `<@&${DISMISSAL_PRESERVED_ROLE_ID}> behouden`
-              : 'De uitzonderingsrol was niet aanwezig'),
+              : 'De uitzonderingsrol was niet aanwezig') +
+            (blockedRoles.length
+              ? `\n**${blockedRoles.length} technisch niet ` +
+                'verwijderbaar**'
+              : ''),
         },
       )
       .setFooter({
@@ -10865,6 +10842,17 @@ client.on(Events.InteractionCreate, async interaction => {
         value: preservedRoleWasPresent
           ? `<@&${DISMISSAL_PRESERVED_ROLE_ID}> behouden`
           : 'Niet aanwezig bij het lid',
+      },
+      {
+        name: 'Technisch niet verwijderbaar',
+        value: blockedRoles.length
+          ? shorten(
+              blockedRoles
+                .map(role => `<@&${role.id}> (${role.id})`)
+                .join('\n'),
+              1024,
+            )
+          : 'Geen',
       },
       {
         name: 'Uitgevoerd door',
@@ -11426,7 +11414,7 @@ client.on(Events.InteractionCreate, async interaction => {
   });
 });
 
-// Alleen beheer kan een afwezigheidsaanvraag definitief beoordelen.
+// Alleen de vaste Hollow Kings-leidingrol kan een afwezigheid beoordelen.
 client.on(Events.InteractionCreate, async interaction => {
   if (
     !interaction.isButton() ||
@@ -11446,16 +11434,13 @@ client.on(Events.InteractionCreate, async interaction => {
     return;
   }
 
-  if (
-    !interaction.memberPermissions?.has(
-      PermissionFlagsBits.ManageGuild,
-    )
-  ) {
+  if (!memberCanUseStaffActions(interaction)) {
     await interaction.reply({
       content:
-        'Je hebt de permissie Server beheren nodig om deze ' +
-        'aanvraag te beoordelen.',
+        `Alleen leden met <@&${STAFF_ACTION_ROLE_ID}> mogen deze ` +
+        'afwezigheidsaanvraag beoordelen.',
       flags: MessageFlags.Ephemeral,
+      allowedMentions: { parse: [] },
     });
     return;
   }
