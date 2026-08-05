@@ -96,7 +96,7 @@ class EmbedBuilder extends DiscordEmbedBuilder {
 // APPLICATION_ROLE_ID=
 // PLUK_ROLE_ID=
 // STAFF_ACTION_ROLE_ID=
-// RANK_ROLE_IDS=1300970950019383397,1317980086552625203,...
+// RANK_ROLE_IDS=rol_id_1,rol_id_2,rol_id_3
 // GANG_MEMBER_LIMIT=50
 
 const LOG_CHANNELS = {
@@ -593,30 +593,10 @@ const DEALER_ITEMS = new Map(
 );
 const dealerSessions = new Map();
 
-// Officiële Hollow Kings-rangen, van hoogste naar laagste rang.
-// Deze ene lijst stuurt /ledenlijst, /profiel, punten en ganglidcontroles aan.
-const DEFAULT_RANK_ROLE_IDS = Object.freeze([
-  '1300970950019383397',
-  '1317980086552625203',
-  '1357136491389915196',
-  '1378846790417383514',
-  '1469476258479079485',
-  '1433234131281772765',
-  '1499427961126785155',
-  '1433234275335016458',
-  '1499427539389776043',
-  '1433234300857487422',
-  '1433234303810277487',
-]);
-
-const configuredRankRoleIds = (process.env.RANK_ROLE_IDS ?? '')
+const RANK_ROLE_IDS = (process.env.RANK_ROLE_IDS ?? '')
   .split(',')
   .map(roleId => roleId.trim())
   .filter(Boolean);
-
-const RANK_ROLE_IDS = configuredRankRoleIds.length
-  ? configuredRankRoleIds
-  : DEFAULT_RANK_ROLE_IDS;
 
 const parsedMemberLimit = Number.parseInt(
   process.env.GANG_MEMBER_LIMIT ?? '50',
