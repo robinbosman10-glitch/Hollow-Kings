@@ -782,6 +782,12 @@ const announcementCommand = new SlashCommandBuilder()
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .setContexts(InteractionContextType.Guild);
 
+const ruleCommand = new SlashCommandBuilder()
+  .setName('regel')
+  .setDescription('Opent het formulier om een regel met rolping te plaatsen')
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+  .setContexts(InteractionContextType.Guild);
+
 const dismissalCommand = new SlashCommandBuilder()
   .setName('ontslag')
   .setDescription('Opent het formulier om een lid te ontslaan')
@@ -7916,6 +7922,7 @@ client.once(Events.ClientReady, async readyClient => {
           'afwezig',
           'aanvraag',
           'mededeling',
+          'regel',
           'ontslag',
           'geefwarn',
           'warnweg',
@@ -7978,6 +7985,7 @@ client.once(Events.ClientReady, async readyClient => {
       await guild.commands.create(absenceCommand.toJSON());
       await guild.commands.create(processingRequestCommand.toJSON());
       await guild.commands.create(announcementCommand.toJSON());
+      await guild.commands.create(ruleCommand.toJSON());
       await guild.commands.create(dismissalCommand.toJSON());
       await guild.commands.create(giveWarnCommand.toJSON());
       await guild.commands.create(removeWarnCommand.toJSON());
@@ -8007,7 +8015,7 @@ client.once(Events.ClientReady, async readyClient => {
     `/puntenreset, ` +
     `/sollicitatietrue, /sollicitatiefalse, /plukopen, ` +
     `/plukdicht, /wapendealer, /afwezig, /aanvraag en ` +
-    `/mededeling, /ontslag, /geefwarn, /warnweg, /giveaway, ` +
+    `/mededeling, /regel, /ontslag, /geefwarn, /warnweg, /giveaway, ` +
     `/giveawaywinnaar, /dashboard, ` +
     `/cooldown, /cancelcooldown, /evenement en ` +
     `/evenementannuleer, /robinbackup en ` +
@@ -11260,6 +11268,169 @@ client.on(Events.InteractionCreate, async interaction => {
           'Ik kon de mededeling niet versturen. Controleer mijn ' +
           'rechten voor Berichten versturen, Links insluiten, ' +
           'Bestanden bijvoegen en Rollen vermelden.',
+        flags: MessageFlags.Ephemeral,
+      }).catch(() => {});
+    }
+  }
+});
+
+// /regel: compact formulier met alleen een grote beschrijving en rolkeuze.
+client.on(Events.InteractionCreate, async interaction => {
+  if (
+    !interaction.isChatInputCommand() ||
+    interaction.commandName !== 'regel' ||
+    !interaction.inGuild()
+  ) {
+    return;
+  }
+
+  if (
+    !interaction.memberPermissions?.has(
+      PermissionFlagsBits.ManageGuild,
+    )
+  ) {
+    await interaction.reply({
+      content:
+        'Je hebt de permissie Server beheren nodig om een regel ' +
+        'te plaatsen.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const descriptionInput = new TextInputBuilder()
+    .setCustomId('rule_description')
+    .setPlaceholder('Schrijf hier de volledige regel')
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(true)
+    .setMinLength(2)
+    .setMaxLength(4000);
+  const roleSelect = new RoleSelectMenuBuilder()
+    .setCustomId('rule_role')
+    .setPlaceholder('Kies de rol die getagd moet worden')
+    .setRequired(true)
+    .setMinValues(1)
+    .setMaxValues(1);
+  const modal = new ModalBuilder()
+    .setCustomId('rule:submit')
+    .setTitle('Hollow Kings • Nieuwe regel')
+    .addLabelComponents(
+      new LabelBuilder()
+        .setLabel('Beschrijving')
+        .setDescription('De volledige tekst van de regel')
+        .setTextInputComponent(descriptionInput),
+      new LabelBuilder()
+        .setLabel('Role Tagg <@&>')
+        .setDescription('Kies één rol voor een echte Discord-melding')
+        .setRoleSelectMenuComponent(roleSelect),
+    );
+
+  try {
+    await interaction.showModal(modal);
+  } catch (error) {
+    console.error('/regel openen mislukt:', error.message);
+  }
+});
+
+// De ingevulde regel openbaar plaatsen en de gekozen rol echt pingen.
+client.on(Events.InteractionCreate, async interaction => {
+  if (
+    !interaction.isModalSubmit() ||
+    interaction.customId !== 'rule:submit' ||
+    !interaction.inGuild()
+  ) {
+    return;
+  }
+
+  if (
+    !interaction.memberPermissions?.has(
+      PermissionFlagsBits.ManageGuild,
+    )
+  ) {
+    await interaction.reply({
+      content:
+        'Je hebt de permissie Server beheren niet meer en kunt ' +
+        'de regel daarom niet plaatsen.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const description = interaction.fields
+    .getTextInputValue('rule_description')
+    .trim();
+  const role = interaction.fields
+    .getSelectedRoles('rule_role', true)
+    .first();
+
+  if (!description || !role) {
+    await interaction.reply({
+      content: 'Vul een geldige beschrijving in en kies één rol.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  if (
+    !canMentionPointsSubmissionRole(
+      interaction.guild,
+      interaction.channel,
+      role,
+    )
+  ) {
+    await interaction.reply({
+      content:
+        `Ik kan <@&${role.id}> niet echt pingen. Maak de rol ` +
+        'vermeldbaar of geef de bot de permissie Iedereen, @here ' +
+        'en alle rollen vermelden.',
+      flags: MessageFlags.Ephemeral,
+      allowedMentions: { parse: [] },
+    });
+    return;
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor(0xD4AF37)
+    .setTitle('📜 Hollow Kings • Regel')
+    .setDescription(shorten(description, 4000))
+    .addFields({
+      name: 'Voor',
+      value: `<@&${role.id}>`,
+    })
+    .setFooter({
+      text:
+        `Geplaatst door ` +
+        `${interaction.user.tag ?? interaction.user.username}`,
+    })
+    .setTimestamp();
+
+  try {
+    await interaction.reply({
+      content: `<@&${role.id}>`,
+      embeds: [embed],
+      allowedMentions: {
+        parse: [],
+        roles: [role.id],
+      },
+    });
+
+    const logEmbed = makeEmbed('server', '/regel gebruikt')
+      .addFields(
+        { name: 'Gebruiker', value: formatUser(interaction.user) },
+        { name: 'Kanaal', value: `<#${interaction.channelId}>` },
+        { name: 'Getagde rol', value: `<@&${role.id}> (${role.id})` },
+        { name: 'Regel', value: shorten(description, 1024) },
+      );
+    await sendLog(interaction.guild, 'server', logEmbed);
+  } catch (error) {
+    console.error('/regel versturen mislukt:', error.message);
+
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content:
+          'Ik kon de regel niet versturen. Controleer mijn rechten ' +
+          'voor Berichten verzenden, Links insluiten en Rollen ' +
+          'vermelden.',
         flags: MessageFlags.Ephemeral,
       }).catch(() => {});
     }
