@@ -93,7 +93,6 @@ class EmbedBuilder extends DiscordEmbedBuilder {
 // ABSENCE_ROLE_ID=
 // WEAPON_DEALER_ROLE_ID=
 // ROBIN_BACKUP_ROLE_ID=
-// APPLICATION_ROLE_ID=
 // PLUK_ROLE_ID=
 // GANG_MEMBER_LIMIT=50
 
@@ -284,14 +283,13 @@ const COOLDOWN_DURATION_MS = 45 * 60 * 1000;
 const EVENT_DRAFT_DURATION_MS = 15 * 60 * 1000;
 const EVENT_MINIMUM_LEAD_MS = 5 * 60 * 1000;
 const POINT_REACTION_EMOJIS = new Set(['🟢', '🔴']);
-const APPLICATION_ROLE_ID =
-  process.env.APPLICATION_ROLE_ID?.trim();
+const APPLICATION_ROLE_ID = '1301218044986654760';
 const STAFF_ACTION_ROLE_ID = '1317979247440035921';
 const DISMISSAL_PRESERVED_ROLE_ID = '1301218044986654760';
 const APPLICATION_BANNER_PATH = fileURLToPath(
-  new URL('./hollow-kings-sollicitaties.jpg', import.meta.url),
+  new URL('./Hollow.png', import.meta.url),
 );
-const APPLICATION_BANNER_NAME = 'hollow-kings-sollicitaties.jpg';
+const APPLICATION_BANNER_NAME = 'Hollow.png';
 const PLUK_ROLE_ID = process.env.PLUK_ROLE_ID?.trim();
 const WARN_ROLE_IDS = new Set(
   (process.env.WARN_ROLE_IDS ?? '')
