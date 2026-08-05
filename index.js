@@ -96,7 +96,6 @@ class EmbedBuilder extends DiscordEmbedBuilder {
 // APPLICATION_ROLE_ID=
 // PLUK_ROLE_ID=
 // STAFF_ACTION_ROLE_ID=
-// RANK_ROLE_IDS=1300970950019383397,1317980086552625203,...
 // GANG_MEMBER_LIMIT=50
 
 const LOG_CHANNELS = {
@@ -107,7 +106,9 @@ const LOG_CHANNELS = {
   server: process.env.SERVER_LOG_CHANNEL_ID,
   voice: process.env.VOICE_LOG_CHANNEL_ID,
   points: process.env.POINTS_LOG_CHANNEL_ID,
-  pointsActivity: process.env.POINTS_ACTIVITY_LOG_CHANNEL_ID,
+  pointsActivity:
+    process.env.POINTS_ACTIVITY_LOG_CHANNEL_ID?.trim() ||
+    process.env.POINTS_LOG_CHANNEL_ID,
   giveaway:
     process.env.GIVEAWAY_LOG_CHANNEL_ID?.trim() ||
     process.env.SERVER_LOG_CHANNEL_ID,
@@ -609,14 +610,7 @@ const DEFAULT_RANK_ROLE_IDS = Object.freeze([
   '1433234303810277487',
 ]);
 
-const configuredRankRoleIds = (process.env.RANK_ROLE_IDS ?? '')
-  .split(',')
-  .map(roleId => roleId.trim())
-  .filter(Boolean);
-
-const RANK_ROLE_IDS = configuredRankRoleIds.length
-  ? configuredRankRoleIds
-  : DEFAULT_RANK_ROLE_IDS;
+const RANK_ROLE_IDS = DEFAULT_RANK_ROLE_IDS;
 
 const parsedMemberLimit = Number.parseInt(
   process.env.GANG_MEMBER_LIMIT ?? '50',
