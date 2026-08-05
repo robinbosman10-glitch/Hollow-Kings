@@ -279,6 +279,7 @@ const COOLDOWN_CHANNEL_ID =
   process.env.COOLDOWN_CHANNEL_ID?.trim();
 const COOLDOWN_ROLE_ID =
   process.env.COOLDOWN_ROLE_ID?.trim();
+const COOLDOWN_END_ROLE_ID = '1301202503496503376';
 const COOLDOWN_DURATION_MS = 45 * 60 * 1000;
 const EVENT_DRAFT_DURATION_MS = 15 * 60 * 1000;
 const EVENT_MINIMUM_LEAD_MS = 5 * 60 * 1000;
@@ -4144,29 +4145,30 @@ async function finishCommunityCooldown(guild, record) {
     const rolePing = await canPingCommunityRole(
       guild,
       channel,
-      record.roleId,
+      COOLDOWN_END_ROLE_ID,
     );
 
     if (!rolePing.role) {
       throw new Error(
-        `cooldownrol ${record.roleId} bestaat niet`,
+        `cooldown-eindrol ${COOLDOWN_END_ROLE_ID} bestaat niet`,
       );
     }
 
     if (!rolePing.canPing) {
       throw new Error(
-        `cooldownrol ${record.roleId} kan niet echt worden gepingd`,
+        `cooldown-eindrol ${COOLDOWN_END_ROLE_ID} kan niet echt ` +
+        'worden gepingd',
       );
     }
 
     await channel.send({
       content:
-        `<@&${record.roleId}> — ` +
+        `<@&${COOLDOWN_END_ROLE_ID}> — ` +
         '**er kunnen weer overvallen worden gedaan!**',
       embeds: [buildFinishedCooldownEmbed(record)],
       allowedMentions: {
         parse: [],
-        roles: [record.roleId],
+        roles: [COOLDOWN_END_ROLE_ID],
       },
     });
 
@@ -8488,12 +8490,13 @@ client.on(Events.InteractionCreate, async interaction => {
     const rolePing = await canPingCommunityRole(
       interaction.guild,
       targetChannel,
-      COOLDOWN_ROLE_ID,
+      COOLDOWN_END_ROLE_ID,
     );
 
     if (!rolePing.role) {
       await interaction.editReply(
-        `De cooldownrol met ID ${COOLDOWN_ROLE_ID} bestaat niet ` +
+        `De cooldown-eindrol met ID ${COOLDOWN_END_ROLE_ID} bestaat ` +
+        'niet ' +
         'in deze server.',
       );
       return;
@@ -8501,7 +8504,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
     if (!rolePing.canPing) {
       await interaction.editReply(
-        'Ik kan de Hollow Kings-rol niet echt pingen. Maak de rol ' +
+        'Ik kan de cooldown-eindrol niet echt pingen. Maak de rol ' +
         'vermeldbaar of geef de bot in het cooldownkanaal de ' +
         'permissie Iedereen, @here en alle rollen vermelden.',
       );
@@ -8511,7 +8514,7 @@ client.on(Events.InteractionCreate, async interaction => {
     const record = {
       guildId: interaction.guildId,
       channelId: targetChannel.id,
-      roleId: COOLDOWN_ROLE_ID,
+      roleId: COOLDOWN_END_ROLE_ID,
       status: 'active',
       startedBy: interaction.user.id,
       startedAt: now,
