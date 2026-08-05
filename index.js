@@ -287,9 +287,9 @@ const APPLICATION_ROLE_ID = '1301218044986654760';
 const STAFF_ACTION_ROLE_ID = '1317979247440035921';
 const DISMISSAL_PRESERVED_ROLE_ID = '1301218044986654760';
 const APPLICATION_BANNER_PATH = fileURLToPath(
-  new URL('./Hollow.png', import.meta.url),
+  new URL('./Hollow-Kings-banner.png', import.meta.url),
 );
-const APPLICATION_BANNER_NAME = 'Hollow.png';
+const APPLICATION_BANNER_NAME = 'Hollow-Kings-banner.png';
 const PLUK_ROLE_ID = process.env.PLUK_ROLE_ID?.trim();
 const WARN_ROLE_IDS = new Set(
   (process.env.WARN_ROLE_IDS ?? '')
