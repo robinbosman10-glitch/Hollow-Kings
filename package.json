@@ -1,0 +1,19 @@
+{
+  "name": "hollow-kings-discord-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Discord-bot voor Hollow Kings",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "check": "node --check index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "discord.js": "14.27.0",
+    "dotenv": "17.4.2"
+  }
+}
